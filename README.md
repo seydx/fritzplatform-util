@@ -4,7 +4,7 @@ Debug tool for [Homebridge Fritz!Platform](https://github.com/SeydX/homebridge-f
 ## Status
 [![npm](https://img.shields.io/npm/v/fritzplatform-util.svg?style=flat-square)](https://www.npmjs.com/package/fritzplatform-util)
 
-[![asciicast](https://asciinema.org/a/HpWtTiKphctA8MsnsX0nV1sgS.png)](https://asciinema.org/a/HpWtTiKphctA8MsnsX0nV1sgS)
+[![asciicast](https://asciinema.org/a/GAYln6DhksBK0XHSdy9LY4OIo.png)](https://asciinema.org/a/GAYln6DhksBK0XHSdy9LY4OIo)
 
 ## Installation instructions
  ```sudo npm install -g fritzplatform-util@latest```
