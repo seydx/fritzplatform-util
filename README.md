@@ -18,7 +18,7 @@ Navigate to the installation folder of the utility and type:
 
 The fritzplatform cli supports several commands, such as:
 - **start**: Initialize start and login, save data in storage for further usages
-- **restart**: For Re-initializing device
+- **add**: Adds new device into storage
 - **credentials**: Show credentials from storage
 - **remove**: Remove credentials from storage
 - **help**:Get help for a specific command
