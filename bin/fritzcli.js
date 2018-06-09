@@ -97,77 +97,101 @@ this.actions = [
   }
 ];
 
+this.storedDevices = [
+  {
+    type: 'list',
+    name: 'device',
+    message: 'Select the device you want to debug:',
+    paginated: false,
+    choices: storage.keys()
+  }
+];
+
 this.setValue = [];
 
 program
   .version('0.0.1')
   .command('start', 'Start debugging tool')
-  .action((args, options, logger) => {
-    if(storage.getItem('Credentials')){
-      console.log('Found credentials in storage, loging in...');
-      loginTR064(storage.getItem('Credentials'),logger);
+  .action((args, options, logger) => { 
+    if(storage.keys().length){
+      inquirer.prompt(self.storedDevices).then(answers => {
+        loginTR064(storage.getItem(answers.device),logger,false);
+      });
     } else {
       inquirer.prompt(self.questions).then(answers => {
-        console.log('\nCredentials saved into storage!\n');
         answers.timeout = answers.timeout*1000;
-        storage.setItem('Credentials',answers);
-        loginTR064(answers,logger);
+        loginTR064(answers,logger,true);
       });
     }
   })
-  .command('restart', 'Start debugging tool')
-  .action((args, options, logger) => {
+  .command('add', 'Start debugging tool')
+  .action((args, options, logger) => { 
     inquirer.prompt(self.questions).then(answers => {
-      console.log('\nCredentials saved into storage!\n');
       answers.timeout = answers.timeout*1000;
-      storage.setItem('Credentials',answers);
-      loginTR064(answers,logger);
+      loginTR064(answers,logger,true);
     });
   })
   .command('credentials', 'Show stored credentials')
-  .action(() => {
-    if(storage.getItem('Credentials')){
-      console.log(storage.getItem('Credentials'));
+  .action((args, options, logger) => {
+    if(storage.keys().length){
+      inquirer.prompt(self.storedDevices).then(answers => {
+        logger.info('\nCredentials:'); 
+        logger.info(storage.getItem(answers.device));
+        logger.info('');
+      });
     } else {
-      console.log('No credentials in storage');
+      logger.info('No credentials in storage!\n');
     }
   })
   .command('remove', 'Remove credentials from storage')
-  .action(() => {
-    if(storage.getItem('Credentials')){
-      storage.removeItem('Credentials');
-      console.log('Credentials removed!');
+  .action((args, options, logger) => {
+    if(storage.keys().length){
+      inquirer.prompt(self.storedDevices).then(answers => {
+        logger.info(storage.removeItem(answers.device));
+        logger.info('Credentials removed!\n');
+      });
     } else {
-      console.log('No credentials in storage');
+      logger.info('No credentials in storage!\n');
     }
   });
 
-function loginTR064(config,logger){
+function loginTR064(config,logger,store){
   self.tr064 = new tr.TR064(config);
   self.tr064.initDevice('TR064')
     .then(result => {
   
-      logger.info('Device initialized: ' + result.meta.friendlyName); 
+      logger.info('\nDevice initialized: ' + result.meta.friendlyName); 
   
       if(config.ssl){
         result.startEncryptedCommunication()
           .then(sslDev => {
-            logger.info('Encrypted communication started with: %s \n',result.meta.friendlyName); 
+            sslDev.login(config.username,config.password);
+            logger.info('Encrypted communication started with: %s \n',result.meta.friendlyName);
+            if(store){ 
+              logger.info('Credentials saved into storage!\n');
+              storage.setItem(result.meta.friendlyName,config);
+            }
             selectService(sslDev, logger);
           })
           .catch(err => {
             logger.error('An error occured by starting encypted communication with: %s \n',result.meta.friendlyName);
-            console.log(err);
+            logger.error(err);
+            logger.info('');
           });
       } else {
         logger.info('Communication started with: %s \n',result.meta.friendlyName); 
+        if(store){
+          logger.info('Credentials saved into storage!\n');
+          storage.setItem(result.meta.friendlyName,config);
+        }
         selectService(result, logger);
       }
 
     })
     .catch(err => {
       logger.error('An error occured by initializing device, trying again...\n');
-      console.log(err);
+      logger.error(err);
+      logger.info('');
     });
 
 }
@@ -232,10 +256,6 @@ function checkOutArgs(device, service, action){
 
 function startDebug(device, service, action, logger){
 
-  let credentials = storage.getItem('Credentials');
-
-  device.login(credentials.username, credentials.password);
-
   let inArgs = checkInArgs(device, service, action);
   let outArgs = checkOutArgs(device, service, action);
 
@@ -247,9 +267,11 @@ function startDebug(device, service, action, logger){
       if(!err){
         logger.info('\nSuccessed! [' + action + ']');
         logger.info(res);
+        logger.info('');
       } else {
         logger.error('\nAn error occured [' + action + ']');
         logger.error(err);
+        logger.info('');
       }
     });
   } else if(!inArgs.length&&outArgs.length){
@@ -258,9 +280,11 @@ function startDebug(device, service, action, logger){
       if(!err){
         logger.info('\nSuccessed! [' + action + ']');
         logger.info(res);
+        logger.info('');
       } else {
         logger.error('\nAn error occured [' + action + ']');
         logger.error(err);
+        logger.info('');
       }
     });
   } else {
@@ -287,9 +311,11 @@ function startDebug(device, service, action, logger){
         if(!err){
           logger.info('\nSuccessed! [' + action + ']');
           logger.info(res);
+          logger.info('');
         } else {
           logger.error('\nAn error occured [' + action + ']');
           logger.error(err);
+          logger.info('');
         }
       });
       
