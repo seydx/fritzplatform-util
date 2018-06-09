@@ -1,0 +1,38 @@
+{
+  "name": "fritzplatform-util",
+  "version": "0.0.1",
+  "description": "fritzplatform-util",
+  "bin": {
+    "fritzcli": "./bin/fritzcli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeydX/fritzplatform-util.git"
+  },
+  "author": "SeydX (https://github.com/SeydX/fritzplatform-util)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SeydX/fritzplatform-util/issues"
+  },
+  "homepage": "https://github.com/SeydX/fritzplatform-util#readme",
+  "keywords": [
+    "fritz",
+    "fritzbox",
+    "fritz-debug",
+    "debug",
+    "internet",
+    "dsl"
+  ],
+  "engines": {
+    "node": ">=0.12.0"
+  },
+  "dependencies": {
+    "@seydx/tr064": "^0.4.1-9",
+    "caporal": "^0.10.0",
+    "chalk": "^2.4.1",
+    "node-persist": "0.0.8",
+    "figlet": "^1.2.0",
+    "clear": "0.0.1",
+    "inquirer": "^5.0.0"
+  }
+}
