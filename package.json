@@ -1,6 +1,6 @@
 {
   "name": "fritzplatform-util",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "fritzplatform-util",
   "bin": {
     "fritzcli": "./bin/fritzcli.js"
