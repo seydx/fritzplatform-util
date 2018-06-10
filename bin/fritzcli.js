@@ -199,6 +199,7 @@ function storeDevice(logger, result, config){
   storage.setItem(result.meta.friendlyName,config);
   setTimeout(function(){
     self.storedDevices[0].choices = storage.keys();
+    self.storedDevices[0].choices.push('Back');
     self.choiceAction[0].choices = ['Debug','Add new device','Show stored credentials','Remove credentials'];
     mainMenu(logger);
   }, 1000);
