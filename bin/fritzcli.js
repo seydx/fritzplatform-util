@@ -82,7 +82,8 @@ this.services = [
     type: 'list',
     name: 'service',
     message: 'Select the service you want to debug:',
-    paginated: false,
+    paginated: true,
+    pageSize: 15,
     choices: []
   }
 ];
@@ -101,9 +102,21 @@ this.storedDevices = [
   {
     type: 'list',
     name: 'device',
-    message: 'Select the device you want to debug:',
+    message: 'Please select a device:',
     paginated: false,
     choices: storage.keys()
+  }
+];
+
+if(this.storedDevices[0].choices.length)this.storedDevices[0].choices.push('Back');
+
+this.choiceAction = [
+  {
+    type: 'list',
+    name: 'action',
+    message: 'What you want to do?',
+    paginated: false,
+    choices: storage.keys().length ? ['Debug','Add new device','Show stored credentials','Remove credentials'] : ['Add new device']
   }
 ];
 
@@ -113,53 +126,77 @@ program
   .version('0.0.1')
   .command('start', 'Start debugging tool')
   .action((args, options, logger) => { 
-    if(storage.keys().length){
-      inquirer.prompt(self.storedDevices).then(answers => {
-        loginTR064(storage.getItem(answers.device),logger,false);
-      });
+    logger.info('Welcome to Fritz!Platform debugging tool.\n'); 
+    mainMenu(logger,'Start');
+  });
+  
+program.parse(process.argv);
+  
+function mainMenu(logger){
+  logger.info('Main menu');
+  inquirer.prompt(self.choiceAction).then(answers => {
+    if(answers.action=='Debug'){
+      debug(logger);
+    } else if(answers.action=='Add new device'){
+      addDevice(logger);
+    } else if(answers.action=='Show stored credentials'){
+      showCredentials(logger);
     } else {
-      inquirer.prompt(self.questions).then(answers => {
-        answers.timeout = answers.timeout*1000;
-        loginTR064(answers,logger,true);
-      });
-    }
-  })
-  .command('add', 'Start debugging tool')
-  .action((args, options, logger) => { 
-    inquirer.prompt(self.questions).then(answers => {
-      answers.timeout = answers.timeout*1000;
-      loginTR064(answers,logger,true);
-    });
-  })
-  .command('credentials', 'Show stored credentials')
-  .action((args, options, logger) => {
-    if(storage.keys().length){
-      inquirer.prompt(self.storedDevices).then(answers => {
-        logger.info('\nCredentials:'); 
-        logger.info(storage.getItem(answers.device));
-        logger.info('');
-      });
-    } else {
-      logger.info('No credentials in storage!\n');
-    }
-  })
-  .command('remove', 'Remove credentials from storage')
-  .action((args, options, logger) => {
-    if(storage.keys().length){
-      inquirer.prompt(self.storedDevices).then(answers => {
-        logger.info(storage.removeItem(answers.device));
-        logger.info('Credentials removed!\n');
-      });
-    } else {
-      logger.info('No credentials in storage!\n');
+      removeCredentials(logger);
     }
   });
+}
+
+function debug(logger){
+  inquirer.prompt(self.storedDevices).then(answers => {
+    if(answers.device!='Back'){
+      loginTR064(storage.getItem(answers.device),logger,false);
+    }else{
+      mainMenu(logger);  
+    }
+  });
+}
+
+function addDevice(logger){
+  inquirer.prompt(self.questions).then(answers => {
+    answers.timeout = answers.timeout*1000;
+    loginTR064(answers,logger,true);
+  });
+}
+
+function showCredentials(logger){
+  inquirer.prompt(self.storedDevices).then(answers => {
+    if(answers.device!='Back'){
+      logger.info('\nCredentials:'); 
+      logger.info(storage.getItem(answers.device));
+      logger.info('');
+      mainMenu(logger);
+    } else {
+      mainMenu(logger);  
+    }
+  });
+}
+
+function removeCredentials(logger){
+  inquirer.prompt(self.storedDevices).then(answers => {
+    if(answers.device!='Back'){
+      logger.info(storage.removeItem(answers.device));
+      logger.info('Credentials removed!\n');
+    } else {
+      mainMenu(logger);  
+    }
+  });
+}
 
 function loginTR064(config,logger,store){
   self.tr064 = new tr.TR064(config);
   self.tr064.initDevice('TR064')
     .then(result => {
-  
+      if(store){ 
+        logger.info('\nCredentials saved into storage!\n');
+        storage.setItem(result.meta.friendlyName,config);
+        mainMenu(logger);
+      }
       logger.info('\nDevice initialized: ' + result.meta.friendlyName); 
   
       if(config.ssl){
@@ -167,10 +204,6 @@ function loginTR064(config,logger,store){
           .then(sslDev => {
             sslDev.login(config.username,config.password);
             logger.info('Encrypted communication started with: %s \n',result.meta.friendlyName);
-            if(store){ 
-              logger.info('Credentials saved into storage!\n');
-              storage.setItem(result.meta.friendlyName,config);
-            }
             selectService(sslDev, logger);
           })
           .catch(err => {
@@ -189,7 +222,7 @@ function loginTR064(config,logger,store){
 
     })
     .catch(err => {
-      logger.error('An error occured by initializing device, trying again...\n');
+      logger.error('An error occured by initializing device!\n');
       logger.error(err);
       logger.info('');
     });
@@ -197,15 +230,21 @@ function loginTR064(config,logger,store){
 }
 
 function selectService(device, logger){
-
+  self.services[0].choices = [];
   self.services[0].choices = device.meta.servicesInfo;
+  if(!self.services[0].choices.includes('Back'))self.services[0].choices.push('Back');
 
   inquirer.prompt(self.services).then(answers => {
-    selectAction(device,answers.service, logger);
+    if(answers.service!='Back'){
+      selectAction(device,answers.service, logger);
+    } else {
+      debug(logger);
+    }
   });
 }
 
 function selectAction(device, service, logger){
+  self.actions[0].choices = [];
   for(const i of Object.keys(device.services)){
     if(service == i){
       for(const j in device.services[i].meta.actionsInfo){
@@ -213,8 +252,13 @@ function selectAction(device, service, logger){
       }
     }
   }
+  if(!self.actions[0].choices.includes('Back'))self.actions[0].choices.push('Back');
   inquirer.prompt(self.actions).then(answers => {
-    startDebug(device,service, answers.action, logger);
+    if(answers.action!='Back'){
+      startDebug(device,service, answers.action, logger);
+    } else {
+      selectService(device, logger);
+    }
   });
 }
 
@@ -262,33 +306,37 @@ function startDebug(device, service, action, logger){
   let debugService = device.services[service];
 
   if(!inArgs.length&&!outArgs.length){
-    logger.info('\n[NO ARGS] Debugging %s', action);
+    logger.info('\nDebugging %s', action);
     debugService.actions[action](function(err, res){
       if(!err){
-        logger.info('\nSuccessed! [' + action + ']');
+        logger.info('\nSuccessed! [' + service + '] [' + action + ']');
         logger.info(res);
         logger.info('');
       } else {
-        logger.error('\nAn error occured [' + action + ']');
+        logger.error('\nAn error occured [' + service + '] [' + action + ']');
         logger.error(err);
         logger.info('');
       }
+      //selectService(device, logger)
+      selectAction(device,service,logger);
     });
   } else if(!inArgs.length&&outArgs.length){
-    logger.info('\n[OUT ARGS] Debugging %s', action);
+    logger.info('\nDebugging %s', action);
     debugService.actions[action](function(err, res){
       if(!err){
-        logger.info('\nSuccessed! [' + action + ']');
+        logger.info('\nSuccessed! [' + service + '] [' + action + ']');
         logger.info(res);
         logger.info('');
       } else {
-        logger.error('\nAn error occured [' + action + ']');
+        logger.error('\nAn error occured [' + service + '] [' + action + ']');
         logger.error(err);
         logger.info('');
       }
+      //selectService(device, logger)
+      selectAction(device,service,logger);
     });
   } else {
-    logger.info('\n[IN OUT ARGS] Debugging %s', action);
+    logger.info('\nDebugging %s', action);
     let setArgs = [];
   
     for(const i of inArgs){
@@ -309,14 +357,16 @@ function startDebug(device, service, action, logger){
       
       debugService.actions[action](setArgs,function(err, res){
         if(!err){
-          logger.info('\nSuccessed! [' + action + ']');
+          logger.info('\nSuccessed! [' + service + '] [' + action + ']');
           logger.info(res);
           logger.info('');
         } else {
-          logger.error('\nAn error occured [' + action + ']');
+          logger.error('\nAn error occured [' + service + '] [' + action + ']');
           logger.error(err);
           logger.info('');
         }
+        //selectService(device, logger)
+        selectAction(device,service,logger);
       });
       
     });
@@ -325,4 +375,8 @@ function startDebug(device, service, action, logger){
 
 }
 
-program.parse(process.argv);
+process.stdin.on("data", (key) => {
+  if (key == "\u0003") {
+    console.log("\nBye bye\n");
+  }
+});
