@@ -120,8 +120,6 @@ this.choiceAction = [
   }
 ];
 
-this.setValue = [];
-
 program
   .version('0.0.1')
   .command('start', 'Start debugging tool')
@@ -314,7 +312,8 @@ function checkOutArgs(device, service, action){
 }
 
 function startDebug(device, service, action, logger){
-
+  
+  let setValue = [];
   let inArgs = checkInArgs(device, service, action);
   let outArgs = checkOutArgs(device, service, action);
 
@@ -358,14 +357,14 @@ function startDebug(device, service, action, logger){
   
       let valName = i.replace('New','').replace('X_AVM-DE_','');
   
-      self.setValue.push({
+      setValue.push({
         type: 'input',
         name: i,
         message: valName+':'
       });
     }
   
-    inquirer.prompt(self.setValue).then(answers => {
+    inquirer.prompt(setValue).then(answers => {
       for(const i of Object.keys(answers)){
         setArgs.push({name:i,value:answers[i]});
       }
