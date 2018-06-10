@@ -4,7 +4,7 @@ Debug tool for [Homebridge Fritz!Platform](https://github.com/SeydX/homebridge-f
 ## Status
 [![npm](https://img.shields.io/npm/v/fritzplatform-util.svg?style=flat-square)](https://www.npmjs.com/package/fritzplatform-util)
 
-[![asciicast](https://asciinema.org/a/GAYln6DhksBK0XHSdy9LY4OIo.png)](https://asciinema.org/a/GAYln6DhksBK0XHSdy9LY4OIo)
+[![asciicast](https://asciinema.org/a/sKH9RByNFm6NyZ4ZZwFNH4Z1B.png)](https://asciinema.org/a/sKH9RByNFm6NyZ4ZZwFNH4Z1B)
 _(v1.0.0)_
 
 ## Installation instructions
