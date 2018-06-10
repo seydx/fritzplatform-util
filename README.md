@@ -5,6 +5,7 @@ Debug tool for [Homebridge Fritz!Platform](https://github.com/SeydX/homebridge-f
 [![npm](https://img.shields.io/npm/v/fritzplatform-util.svg?style=flat-square)](https://www.npmjs.com/package/fritzplatform-util)
 
 [![asciicast](https://asciinema.org/a/GAYln6DhksBK0XHSdy9LY4OIo.png)](https://asciinema.org/a/GAYln6DhksBK0XHSdy9LY4OIo)
+_(v1.0.0)_
 
 ## Installation instructions
  ```sudo npm install -g fritzplatform-util@latest```
@@ -16,12 +17,14 @@ Navigate to the installation folder of the utility and type:
 
 ## Commands
 
-The fritzplatform cli supports several commands, such as:
+The fritzplatform cli support following command:
 - **start**: Initialize start and login, save data in storage for further usages
-- **add**: Adds new device into storage
-- **credentials**: Show credentials from storage
-- **remove**: Remove credentials from storage
-- **help**:Get help for a specific command
+
+The fritzplatform cli support following prompts:
+- **Debug**: Debug a specified device from storage
+- **Add**: Add new device into storage
+- **Credentials**: Show credentials from specified device
+- **Remove**: Remove specified device from storage
 
 ## Licens
 
