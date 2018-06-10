@@ -1,4 +1,4 @@
-# Fritz!Platform Util
+# Fritz!Platform Util v1.1
 Debug tool for [Homebridge Fritz!Platform](https://github.com/SeydX/homebridge-fritz-platform). 
 
 ## Status
