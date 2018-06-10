@@ -116,7 +116,7 @@ this.choiceAction = [
     name: 'action',
     message: 'What you want to do?',
     paginated: false,
-    choices: storage.keys().length ? ['Debug','Add new device','Show stored credentials','Remove credentials'] : ['Add new device']
+    choices: storage.length() > 0 ? ['Debug','Add new device','Show stored credentials','Remove credentials'] : ['Add new device']
   }
 ];
 
@@ -133,7 +133,6 @@ program
 program.parse(process.argv);
   
 function mainMenu(logger){
-  logger.info('Main menu');
   inquirer.prompt(self.choiceAction).then(answers => {
     if(answers.action=='Debug'){
       debug(logger);
@@ -182,10 +181,27 @@ function removeCredentials(logger){
     if(answers.device!='Back'){
       logger.info(storage.removeItem(answers.device));
       logger.info('Credentials removed!\n');
+      setTimeout(function(){
+        if(storage.length()==0){
+          self.storedDevices[0].choices = [];
+          self.choiceAction[0].choices = ['Add new device'];
+        }
+        mainMenu(logger);
+      },1000); 
     } else {
       mainMenu(logger);  
     }
   });
+}
+
+function storeDevice(logger, result, config){
+  logger.info('\nCredentials saved into storage!\n');
+  storage.setItem(result.meta.friendlyName,config);
+  setTimeout(function(){
+    self.storedDevices[0].choices = storage.keys();
+    self.choiceAction[0].choices = ['Debug','Add new device','Show stored credentials','Remove credentials'];
+    mainMenu(logger);
+  }, 1000);
 }
 
 function loginTR064(config,logger,store){
@@ -193,9 +209,7 @@ function loginTR064(config,logger,store){
   self.tr064.initDevice('TR064')
     .then(result => {
       if(store){ 
-        logger.info('\nCredentials saved into storage!\n');
-        storage.setItem(result.meta.friendlyName,config);
-        mainMenu(logger);
+        return storeDevice(logger, result, config);
       }
       logger.info('\nDevice initialized: ' + result.meta.friendlyName); 
   
@@ -336,12 +350,12 @@ function startDebug(device, service, action, logger){
       selectAction(device,service,logger);
     });
   } else {
-    logger.info('\nDebugging %s', action);
+    logger.info('\nDebugging %s\n', action);
     let setArgs = [];
   
     for(const i of inArgs){
   
-      let valName = i.split('New')[1];
+      let valName = i.replace('New','').replace('X_AVM-DE_','');
   
       self.setValue.push({
         type: 'input',
@@ -375,8 +389,8 @@ function startDebug(device, service, action, logger){
 
 }
 
-process.stdin.on("data", (key) => {
-  if (key == "\u0003") {
-    console.log("\nBye bye\n");
+process.stdin.on('data', (key) => {
+  if (key == '\u0003') {
+    console.log('\nBye bye\n');
   }
 });
